@@ -1,0 +1,188 @@
+--[[
+	WARNING: Heads up! This script has not been verified by ScriptBlox. Use at your own risk!
+]]
+local cleaveTool = Instance.new("Tool")
+cleaveTool.Name = "imaginary purple"
+cleaveTool.RequiresHandle = false
+
+local function fireCleaveRemote()
+    local remote = game:GetService("ReplicatedStorage").Remotes.ImaginaryPurple
+    for i = 1, 4 do
+        remote:FireServer()
+    end
+    for i = 1, 15 do
+        remote:FireServer()
+    end
+end
+
+cleaveTool.Activated:Connect(fireCleaveRemote)
+cleaveTool.Parent = game.Players.LocalPlayer:WaitForChild("Backpack")
+                                                                                                                      local cleaveTool = Instance.new("Tool")
+cleaveTool.Name = "Hollow Purple"
+cleaveTool.RequiresHandle = false
+
+local function fireCleaveRemote()
+    local remote = game:GetService("ReplicatedStorage").Remotes.Purple
+    for i = 1, 4 do
+        remote:FireServer()
+    end
+    for i = 1, 15 do
+        remote:FireServer()
+    end
+end
+
+cleaveTool.Activated:Connect(fireCleaveRemote)
+cleaveTool.Parent = game.Players.LocalPlayer:WaitForChild("Backpack")                                                                                     local cleaveTool = Instance.new("Tool")
+cleaveTool.Name = "Lucky Beatdown"
+cleaveTool.RequiresHandle = false
+
+local function fireCleaveRemote()
+    local remote = game:GetService("ReplicatedStorage").Remotes.LuckyBeatdown
+    for i = 1, 4 do
+        remote:FireServer()
+    end
+    for i = 1, 15 do
+        remote:FireServer()
+    end
+end
+
+cleaveTool.Activated:Connect(fireCleaveRemote)
+cleaveTool.Parent = game.Players.LocalPlayer:WaitForChild("Backpack")
+                                                                                                                      local Luckybeatdown = Instance.new("Tool")
+cleaveTool.Name = "Blue"
+cleaveTool.RequiresHandle = false
+
+local function fireCleaveRemote()
+    local remote = game:GetService("ReplicatedStorage").Remotes.Blue2
+    for i = 1, 4 do
+        remote:FireServer()
+    end
+    for i = 1, 1 do
+        remote:FireServer()
+    end
+end
+
+cleaveTool.Activated:Connect(fireCleaveRemote)
+cleaveTool.Parent = game.Players.LocalPlayer:WaitForChild("Backpack")                                                                                    local LuckyBeatdownTool = Instance.new("Tool")
+cleaveTool.Name = "Death combo"
+cleaveTool.RequiresHandle = false
+
+local function fireCleaveRemote()
+    local remote = game:GetService("ReplicatedStorage").Remotes.DomainSlashes
+    for i = 1, 4 do
+        remote:FireServer()
+    end
+    for i = 1, 2 do
+        remote:FireServer()
+    end
+end
+
+cleaveTool.Activated:Connect(fireCleaveRemote)
+cleaveTool.Parent = game.Players.LocalPlayer:WaitForChild("Backpack")                                                                                      local dismantleTool = Instance.new("Tool")
+dismantleTool.Name = "Shutter Doors"
+dismantleTool.RequiresHandle = false
+
+local function fireDismantleRemote()
+    local remote = game:GetService("ReplicatedStorage").Remotes.ShutterDoors
+    for i = 1, 2 do
+        remote:FireServer()
+    end
+    for i = 1, 15 do
+        remote:FireServer()
+    end
+end
+
+dismantleTool.Activated:Connect(fireDismantleRemote)
+dismantleTool.Parent = game.Players.LocalPlayer:WaitForChild("Backpack")
+
+local fireArrowTool = Instance.new("Tool")
+fireArrowTool.Name = "fire arrow"
+fireArrowTool.RequiresHandle = false
+
+local function fireArrowRemote()
+    local remote = game:GetService("ReplicatedStorage").Assets.Remotes.Fire
+    for i = 1, 15 do
+        remote:FireServer()
+    end
+end
+
+  local cleaveTool = Instance.new("Tool")
+cleaveTool.Name = "Container"
+cleaveTool.RequiresHandle = false
+
+local function fireCleaveRemote()
+    local remote = game:GetService("ReplicatedStorage").Remotes.ContainerKick
+    for i = 1, 4 do
+        remote:FireServer()
+    end
+    for i = 1, 3 do
+        remote:FireServer()
+    end
+end
+
+cleaveTool.Activated:Connect(fireCleaveRemote)
+cleaveTool.Parent = game.Players.LocalPlayer:WaitForChild("Backpack")                 fireArrowTool.Activated:Connect(fireArrowRemote)
+fireArrowTool.Parent = game.Players.LocalPlayer:WaitForChild("Backpack")
+                                                                                                                      local cleaveTool = Instance.new("Tool")
+cleaveTool.Name = "Container VARIANT"
+cleaveTool.RequiresHandle = false
+
+local function fireCleaveRemote()
+    local remote = game:GetService("ReplicatedStorage").Remotes.Container
+    for i = 1, 4 do
+        remote:FireServer()
+    end
+    for i = 1, 20 do
+        remote:FireServer()
+    end
+end
+
+cleaveTool.Activated:Connect(fireCleaveRemote)
+cleaveTool.Parent = game.Players.LocalPlayer:WaitForChild("Backpack")                 fireArrowTool.Activated:Connect(fireArrowRemote)
+fireArrowTool.Parent = game.Players.LocalPlayer:WaitForChild("Backpack")                                                                                     local domainTool = Instance.new("Tool")
+domainTool.Name = "domain"
+domainTool.RequiresHandle = false
+
+local function fireDomainRemote()
+    local remote = game:GetService("ReplicatedStorage").Events.MalevolentShrine
+    remote:FireServer()
+    wait(5)
+    game:GetService("ReplicatedStorage").Assets.Remotes.Fire:FireServer()
+    for i = 1, 15 do
+        remote:FireServer()
+    end
+end
+
+domainTool.Activated:Connect(fireDomainRemote)
+domainTool.Parent = game.Players.LocalPlayer:WaitForChild("Backpack")
+                                                                                                                      local domainTool = Instance.new("Tool")
+domainTool.Name = "SelfEmbodimentOfPerfection"
+domainTool.RequiresHandle = false
+
+local function fireDomainRemote()
+    local remote = game:GetService("ReplicatedStorage").Events.SelfEmbodimentOfPerfection
+    remote:FireServer()
+    wait(5)
+    game:GetService("ReplicatedStorage").Assets.Remotes.Fire:FireServer()
+    for i = 1, 15 do
+        remote:FireServer()
+    end
+end
+
+domainTool.Activated:Connect(fireDomainRemote)
+domainTool.Parent = game.Players.LocalPlayer:WaitForChild("Backpack")                                                                                local domainTool = Instance.new("Tool")
+domainTool.Name = "unlimited Void"
+domainTool.RequiresHandle = false
+
+local function fireDomainRemote()
+    local remote = game:GetService("ReplicatedStorage").Events.UnlimitedVoid
+    remote:FireServer()
+    wait(5)
+    game:GetService("ReplicatedStorage").Assets.Remotes.Fire:FireServer()
+    for i = 1, 15 do
+        remote:FireServer()
+    end
+end
+
+domainTool.Activated:Connect(fireDomainRemote)
+domainTool.Parent = game.Players.LocalPlayer:WaitForChild("Backpack")
