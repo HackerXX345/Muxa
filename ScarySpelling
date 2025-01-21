@@ -1,0 +1,58 @@
+local lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local word
+local baseurl = "https://raw.githubusercontent.com/Guilded1/vapenotifs/main/"
+local chosenurl
+local shouldnotify = false
+local Window = lib.CreateLib("i spent too much time on this", "Midnight")
+local Tab = Window:NewTab("Main")
+local Tab2 = Window:NewTab("Visual")
+local notifs = Tab2:NewSection("Notifications")
+local Section = Tab:NewSection("Autotype")
+local label = Section:NewLabel("The word is: None")
+notifs:NewButton("New UI notification (bottom right)", "For autoguess", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/Guilded1/vapenotifs/main/newnotification.lua"))()("Testing", "This is a info notification", 5, "info")
+end)
+notifs:NewButton("Rise UI notification (top left)", "For autoguess", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/Guilded1/vapenotifs/refs/heads/main/risenotification.lua"))()("Testing", "This is a info notification", 5, "info")
+end)
+notifs:NewButton("Old UI notification (bottom right)", "For autoguess", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/Guilded1/vapenotifs/refs/heads/main/oldnotification.lua"))()("Testing", "This is a info notification", 5, "info")
+end)
+notifs:NewDropdown("Notification UI", "once again, for autotype notifications", {"new", "rise", "old"}, function(ui)
+    chosenurl = baseurl..ui.."notification.lua"
+end)
+Section:NewToggle("Notify new words?", "more info in Visual tab", function(state)
+    shouldnotify = state
+end)
+
+Section:NewToggle("Autotype", "automatically types and inputs the answers for you", function(state)
+    local john = game:GetService("Players").LocalPlayer.PlayerGui.MainGui.GameFrame.DefinitionText:GetPropertyChangedSignal("Visible"):Connect(function()
+        if game:GetService("Players").LocalPlayer.PlayerGui.MainGui.GameFrame.DefinitionText.Visible then
+            task.wait(0.4)
+            for i = 1, #word do
+                local piece = word:sub(1, i)
+                task.wait(0.2)
+                workspace.Map.Functional.Screen.SurfaceGui.MainFrame.MainGameContainer.MainTxtContainer.TypingText.Text = piece
+                game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("GameEvent"):FireServer("updateAnswer", tostring(piece))
+            end
+            workspace.Map.Functional.Screen.SurfaceGui.MainFrame.MainGameContainer.MainTxtContainer.TypingText.Text = word
+            game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("GameEvent"):FireServer("submitAnswer", word)
+        end
+    end)
+end)
+Section:NewKeybind("Toggle UI", "toggles the ui visibility on and off", Enum.KeyCode.M, function()
+	lib:ToggleUI()
+end)
+
+local namelistener = game:GetService("SoundService").ChildAdded:Connect(function(v)
+    if string.match(v.Name, "%u") ~= nil then return end
+    word = v.Name
+    label:UpdateLabel("The word is: "..word)
+    if shouldnotify == true then
+        loadstring(game:HttpGet(chosenurl))()(word, "The word is: "..word, 5, "info")
+    end
+end)
+
+local listenerlistener = game.CoreGui.ChildRemoved:Connect(function(v)
+    if tonumber(v.Name) then namelistener:Disconnect(); listenerlistener:Disconnect() end
+end)
