@@ -31,7 +31,7 @@ Section:NewToggle("Autotype", "automatically types and inputs the answers for yo
             task.wait(0.4)
             for i = 1, #word do
                 local piece = word:sub(1, i)
-                task.wait(0.2)
+                task.wait(0)
                 workspace.Map.Functional.Screen.SurfaceGui.MainFrame.MainGameContainer.MainTxtContainer.TypingText.Text = piece
                 game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("GameEvent"):FireServer("updateAnswer", tostring(piece))
             end
