@@ -1,0 +1,98 @@
+task.spawn(function()
+    local Players = game:GetService("Players")
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local player = Players.LocalPlayer
+
+    -- 1. TOGGLE STATES (Put your script variables here)
+    local autoLootEnabled = false
+    local scriptRunning = true
+
+    -- UI Setup & Duplicate Clean
+    local targetParent = game:GetService("CoreGui") or player:WaitForChild("PlayerGui")
+    if targetParent:FindFirstChild("SimpleMenu") then targetParent.SimpleMenu:Destroy() end
+
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "SimpleMenu"
+    ScreenGui.Parent = targetParent
+
+    -- Main Window
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Size = UDim2.new(0, 200, 0, 250) -- Flat pixel sizes (Easy to manage)
+    MainFrame.Position = UDim2.new(0.5, -100, 0.3, -125)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    MainFrame.Draggable = true
+    MainFrame.Active = true
+    MainFrame.Parent = ScreenGui
+
+    -- Close / Unload Button
+    local UnloadButton = Instance.new("TextButton")
+    UnloadButton.Size = UDim2.new(0, 25, 0, 25)
+    UnloadButton.Position = UDim2.new(1, -30, 0, 5)
+    UnloadButton.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+    UnloadButton.Text = "X"
+    UnloadButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    UnloadButton.Parent = MainFrame
+
+    UnloadButton.MouseButton1Click:Connect(function()
+        autoLootEnabled = false
+        scriptRunning = false
+        ScreenGui:Destroy()
+    end)
+
+    -- -----------------------------------------------------------------------------
+    -- 🔘 TEMPLATE: STANDARD CLICK BUTTON
+    -- -----------------------------------------------------------------------------
+    local SimpleButton = Instance.new("TextButton")
+    SimpleButton.Size = UDim2.new(0, 180, 0, 40)
+    SimpleButton.Position = UDim2.new(0, 10, 0, 40)
+    SimpleButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    SimpleButton.Text = "Run Action Once"
+    SimpleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    SimpleButton.Parent = MainFrame
+
+    SimpleButton.MouseButton1Click:Connect(function()
+        -- PUT YOUR ONE-TIME ACTION HERE
+        print("Button was pressed!")
+    end)
+
+    -- -----------------------------------------------------------------------------
+    -- 🔄 TEMPLATE: TOGGLE BUTTON
+    -- -----------------------------------------------------------------------------
+    local ToggleButton = Instance.new("TextButton")
+    ToggleButton.Size = UDim2.new(0, 180, 0, 40)
+    ToggleButton.Position = UDim2.new(0, 10, 0, 95)
+    ToggleButton.BackgroundColor3 = Color3.fromRGB(150, 50, 50) -- Starts Red (Off)
+    ToggleButton.Text = "Auto Loot: OFF"
+    ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ToggleButton.Parent = MainFrame
+
+    ToggleButton.MouseButton1Click:Connect(function()
+        autoLootEnabled = not autoLootEnabled -- Flips true/false
+        
+        if autoLootEnabled then
+            ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 150, 50) -- Green
+            ToggleButton.Text = "Auto Loot: ON"
+        else
+            ToggleButton.BackgroundColor3 = Color3.fromRGB(150, 50, 50) -- Red
+            ToggleButton.Text = "Auto Loot: OFF"
+        end
+    end)
+
+    -- -----------------------------------------------------------------------------
+    -- 🔄 BACKGROUND LOOP (Runs your toggled functions safely)
+    -- -----------------------------------------------------------------------------
+    task.spawn(function()
+        local lootRemote = ReplicatedStorage:WaitForChild("RemoteEvents"):WaitForChild("LootPickup")
+        local i = 1
+
+        while scriptRunning do
+            if autoLootEnabled then
+                -- PUT YOUR LOOP LOGIC HERE
+                lootRemote:FireServer({[1] = i})
+                
+                i = (i % 10) + 1 -- Cycles 1 through 10 neatly
+            end
+            task.wait(0.01) -- Keeps game from crashing
+        end
+    end)
+end)
