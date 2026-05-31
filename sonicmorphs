@@ -1,0 +1,19 @@
+local players = game:GetService("Players")
+local player = players.LocalPlayer
+local character =  player.Character or player.CharacterAdded:Wait()
+local rootPart = character:WaitForChild("HumanoidRootPart")
+for _, child in workspace.Claims:GetChildren() do
+	if child:IsA("MeshPart") then
+		
+		rootPart.CFrame = child.CFrame
+		local prompt = child:FindFirstChildOfClass("ProximityPrompt")
+		if prompt then
+    		fireproximityprompt(prompt, true) -- 1. Press and hold down
+    		task.wait(prompt.HoldDuration + 0.1) -- 2. Wait out the timer
+    		fireproximityprompt(prompt, false) -- 3. Release the key to finish!
+		end
+	else 
+		print("not a paart")
+	end
+	task.wait(0.1)
+end
