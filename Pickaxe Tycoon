@@ -2,6 +2,7 @@ task.spawn(function()
     local Players = game:GetService("Players")
     local ReplicatedStorage = game:GetService("ReplicatedStorage")
     local Workspace = game:GetService("Workspace")
+    local UserInputService = game:GetService("UserInputService")
     local player = Players.LocalPlayer
     local plots = workspace.Plots
     local character = player.Character or player.CharacterAdded:Wait()
@@ -44,7 +45,14 @@ task.spawn(function()
     local autoMergeEnabled = false      
     local antiLagEnabled = false        
     local autoDeleteChestsEnabled = false 
+    local autoGroupEnabled = false
     local autoEverythingEnabled = false
+    
+    local uiVisible = true
+    local currentKeybind = Enum.KeyCode.F
+    local autoEverythingKeybind = Enum.KeyCode.G
+    local isBindingMenu = false
+    local isBindingEverything = false
 
     local targetParent = game:GetService("CoreGui") or player:WaitForChild("PlayerGui")
     if targetParent:FindFirstChild("SimpleMenu") then targetParent.SimpleMenu:Destroy() end
@@ -54,8 +62,8 @@ task.spawn(function()
     ScreenGui.Parent = targetParent
 
     local MainFrame = Instance.new("Frame")
-    MainFrame.Size = UDim2.new(0, 220, 0, 685)
-    MainFrame.Position = UDim2.new(0.5, -110, 0.3, -342)
+    MainFrame.Size = UDim2.new(0, 220, 0, 350)
+    MainFrame.Position = UDim2.new(0.5, -110, 0.3, -175)
     MainFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 26)
     MainFrame.BorderSizePixel = 0
     MainFrame.Draggable = true
@@ -99,6 +107,15 @@ task.spawn(function()
     UnloadCorner.CornerRadius = UDim.new(0, 6)
     UnloadCorner.Parent = UnloadButton
 
+    local ScrollFrame = Instance.new("ScrollingFrame")
+    ScrollFrame.Size = UDim2.new(1, 0, 1, -40)
+    ScrollFrame.Position = UDim2.new(0, 0, 0, 40)
+    ScrollFrame.BackgroundTransparency = 1
+    ScrollFrame.BorderSizePixel = 0
+    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 755)
+    ScrollFrame.ScrollBarThickness = 0
+    ScrollFrame.Parent = MainFrame
+
     local function styleButton(btn, text, yPos, height, isToggle, defaultColor)
         btn.Size = UDim2.new(0, 200, 0, height)
         btn.Position = UDim2.new(0, 10, 0, yPos)
@@ -108,15 +125,87 @@ task.spawn(function()
         btn.TextColor3 = Color3.fromRGB(240, 240, 245)
         btn.TextSize = 13
         btn.Font = Enum.Font.GothamBold
-        btn.Parent = MainFrame
+        btn.Parent = ScrollFrame
 
         local corner = Instance.new("UICorner")
         corner.CornerRadius = UDim.new(0, 6)
         corner.Parent = btn
     end
 
+    local ToggleButton1 = Instance.new("TextButton")
+    local ToggleButton = Instance.new("TextButton")
+    local DepositToggle = Instance.new("TextButton")
+    local BuyToggle = Instance.new("TextButton")
+    local MergeToggle = Instance.new("TextButton")
+    local AntiLagToggle = Instance.new("TextButton")
+    local GroupToggle = Instance.new("TextButton")
+    local EverythingToggle = Instance.new("TextButton")
+
+    local function updateAllToggles()
+        ToggleButton1.BackgroundColor3 = autoLootEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
+        ToggleButton1.Text = autoLootEnabled and "Auto Loot: ON" or "Auto Loot: OFF"
+
+        ToggleButton.BackgroundColor3 = autoCollectEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
+        ToggleButton.Text = autoCollectEnabled and "Auto Collect: ON" or "Auto Collect: OFF"
+
+        DepositToggle.BackgroundColor3 = autoDepositEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
+        DepositToggle.Text = autoDepositEnabled and "Auto Deposit: ON" or "Auto Deposit: OFF"
+
+        BuyToggle.BackgroundColor3 = autoBuyEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
+        BuyToggle.Text = autoBuyEnabled and "Auto Buy: ON" or "Auto Buy: OFF"
+
+        MergeToggle.BackgroundColor3 = autoMergeEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
+        MergeToggle.Text = autoMergeEnabled and "Auto Merge: ON" or "Auto Merge: OFF"
+
+        AntiLagToggle.BackgroundColor3 = antiLagEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
+        AntiLagToggle.Text = antiLagEnabled and "Anti-Lag Wrecks: ON" or "Anti-Lag Wrecks: OFF"
+
+        GroupToggle.BackgroundColor3 = autoGroupEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
+        GroupToggle.Text = autoGroupEnabled and "Auto Group Reward: ON" or "Auto Group Reward: OFF"
+    end
+
+    local function toggleEverythingRoutine()
+        autoEverythingEnabled = not autoEverythingEnabled
+        
+        autoLootEnabled = autoEverythingEnabled
+        autoCollectEnabled = autoEverythingEnabled
+        autoDepositEnabled = autoEverythingEnabled
+        autoBuyEnabled = autoEverythingEnabled
+        autoMergeEnabled = autoEverythingEnabled 
+        antiLagEnabled = autoEverythingEnabled 
+        autoGroupEnabled = autoEverythingEnabled
+
+        if autoEverythingEnabled then
+            EverythingToggle.BackgroundColor3 = Color3.fromRGB(40, 150, 80)
+            EverythingToggle.Text = "Auto Everything: ON"
+        else
+            EverythingToggle.BackgroundColor3 = Color3.fromRGB(110, 45, 135)
+            EverythingToggle.Text = "Auto Everything: OFF"
+        end
+
+        updateAllToggles()
+    end
+
+    styleButton(EverythingToggle, "Auto Everything: OFF", 15, 40, true, Color3.fromRGB(110, 45, 135))
+    EverythingToggle.Font = Enum.Font.GothamBold
+
+    EverythingToggle.MouseButton1Click:Connect(function()
+        if not scriptRunning then return end
+        toggleEverythingRoutine()
+    end)
+
+    local EverythingKeybindButton = Instance.new("TextButton")
+    styleButton(EverythingKeybindButton, "Auto Everything Key: G", 65, 40, false, Color3.fromRGB(44, 44, 48))
+    
+    EverythingKeybindButton.MouseButton1Click:Connect(function()
+        if not scriptRunning or isBindingMenu then return end
+        isBindingEverything = true
+        EverythingKeybindButton.Text = "Press any key..."
+        EverythingKeybindButton.BackgroundColor3 = Color3.fromRGB(110, 45, 135)
+    end)
+
     local SimpleButton = Instance.new("TextButton")
-    styleButton(SimpleButton, "Buy 100", 55, 40)
+    styleButton(SimpleButton, "Buy 100", 120, 40)
 
     SimpleButton.MouseButton1Click:Connect(function()
         task.spawn(function()
@@ -139,7 +228,7 @@ task.spawn(function()
     end)
 
     local UpgradeButton = Instance.new("TextButton")
-    styleButton(UpgradeButton, "Upgrade Plot", 105, 40)
+    styleButton(UpgradeButton, "Upgrade Plot", 170, 40)
 
     UpgradeButton.MouseButton1Click:Connect(function()
         task.spawn(function()
@@ -161,8 +250,7 @@ task.spawn(function()
         end)
     end)
 
-    local ToggleButton1 = Instance.new("TextButton")
-    styleButton(ToggleButton1, "Auto Loot: OFF", 160, 40, true, Color3.fromRGB(160, 60, 60))
+    styleButton(ToggleButton1, "Auto Loot: OFF", 225, 40, true, Color3.fromRGB(160, 60, 60))
 
     ToggleButton1.MouseButton1Click:Connect(function()
         if not scriptRunning then return end
@@ -171,8 +259,7 @@ task.spawn(function()
         ToggleButton1.Text = autoLootEnabled and "Auto Loot: ON" or "Auto Loot: OFF"
     end)
 
-    local ToggleButton = Instance.new("TextButton")
-    styleButton(ToggleButton, "Auto Collect: OFF", 215, 40, true, Color3.fromRGB(160, 60, 60))
+    styleButton(ToggleButton, "Auto Collect: OFF", 280, 40, true, Color3.fromRGB(160, 60, 60))
 
     ToggleButton.MouseButton1Click:Connect(function()
         if not scriptRunning then return end
@@ -181,8 +268,7 @@ task.spawn(function()
         ToggleButton.Text = autoCollectEnabled and "Auto Collect: ON" or "Auto Collect: OFF"
     end)
 
-    local DepositToggle = Instance.new("TextButton")
-    styleButton(DepositToggle, "Auto Deposit: OFF", 270, 40, true, Color3.fromRGB(160, 60, 60))
+    styleButton(DepositToggle, "Auto Deposit: OFF", 335, 40, true, Color3.fromRGB(160, 60, 60))
 
     DepositToggle.MouseButton1Click:Connect(function()
         if not scriptRunning then return end
@@ -191,8 +277,7 @@ task.spawn(function()
         DepositToggle.Text = autoDepositEnabled and "Auto Deposit: ON" or "Auto Deposit: OFF"
     end)
 
-    local BuyToggle = Instance.new("TextButton")
-    styleButton(BuyToggle, "Auto Buy: OFF", 325, 40, true, Color3.fromRGB(160, 60, 60))
+    styleButton(BuyToggle, "Auto Buy: OFF", 390, 40, true, Color3.fromRGB(160, 60, 60))
 
     BuyToggle.MouseButton1Click:Connect(function()
         if not scriptRunning then return end
@@ -211,13 +296,13 @@ task.spawn(function()
     for index, amt in ipairs(amounts) do
         local AmtBtn = Instance.new("TextButton")
         AmtBtn.Size = UDim2.new(0, buttonWidth, 0, 30)
-        AmtBtn.Position = UDim2.new(0, startX + ((index - 1) * (buttonWidth + gap)), 0, 375) 
+        AmtBtn.Position = UDim2.new(0, startX + ((index - 1) * (buttonWidth + gap)), 0, 440) 
         AmtBtn.BorderSizePixel = 0
         AmtBtn.TextColor3 = Color3.fromRGB(240, 240, 245)
         AmtBtn.Text = tostring(amt)
         AmtBtn.Font = Enum.Font.GothamBold
         AmtBtn.TextSize = 12
-        AmtBtn.Parent = MainFrame
+        AmtBtn.Parent = ScrollFrame
         
         local btnCorner = Instance.new("UICorner")
         btnCorner.CornerRadius = UDim.new(0, 5)
@@ -244,8 +329,7 @@ task.spawn(function()
         table.insert(amountButtons, AmtBtn)
     end
 
-    local MergeToggle = Instance.new("TextButton")
-    styleButton(MergeToggle, "Auto Merge: OFF", 420, 40, true, Color3.fromRGB(160, 60, 60))
+    styleButton(MergeToggle, "Auto Merge: OFF", 485, 40, true, Color3.fromRGB(160, 60, 60))
 
     MergeToggle.MouseButton1Click:Connect(function()
         if not scriptRunning then return end
@@ -254,8 +338,7 @@ task.spawn(function()
         MergeToggle.Text = autoMergeEnabled and "Auto Merge: ON" or "Auto Merge: OFF"
     end)
 
-    local AntiLagToggle = Instance.new("TextButton")
-    styleButton(AntiLagToggle, "Anti-Lag Wrecks: OFF", 475, 40, true, Color3.fromRGB(160, 60, 60))
+    styleButton(AntiLagToggle, "Anti-Lag Wrecks: OFF", 540, 40, true, Color3.fromRGB(160, 60, 60))
 
     AntiLagToggle.MouseButton1Click:Connect(function()
         if not scriptRunning then return end
@@ -265,7 +348,7 @@ task.spawn(function()
     end)
 
     local DeleteChestsToggle = Instance.new("TextButton")
-    styleButton(DeleteChestsToggle, "Auto Delete Chests: OFF", 530, 40, true, Color3.fromRGB(160, 60, 60))
+    styleButton(DeleteChestsToggle, "Auto Delete Chests: OFF", 595, 40, true, Color3.fromRGB(160, 60, 60))
 
     DeleteChestsToggle.MouseButton1Click:Connect(function()
         if not scriptRunning then return end
@@ -274,46 +357,52 @@ task.spawn(function()
         DeleteChestsToggle.Text = autoDeleteChestsEnabled and "Auto Delete Chests: ON" or "Auto Delete Chests: OFF"
     end)
 
-    local EverythingToggle = Instance.new("TextButton")
-    styleButton(EverythingToggle, "Auto Everything: OFF", 585, 40, true, Color3.fromRGB(110, 45, 135))
-    EverythingToggle.Font = Enum.Font.GothamBold
+    styleButton(GroupToggle, "Auto Group Reward: OFF", 650, 40, true, Color3.fromRGB(160, 60, 60))
 
-    EverythingToggle.MouseButton1Click:Connect(function()
+    GroupToggle.MouseButton1Click:Connect(function()
         if not scriptRunning then return end
-        autoEverythingEnabled = not autoEverythingEnabled
-        
-        autoLootEnabled = autoEverythingEnabled
-        autoCollectEnabled = autoEverythingEnabled
-        autoDepositEnabled = autoEverythingEnabled
-        autoBuyEnabled = autoEverythingEnabled
-        autoMergeEnabled = autoEverythingEnabled 
-        antiLagEnabled = autoEverythingEnabled 
+        autoGroupEnabled = not autoGroupEnabled
+        GroupToggle.BackgroundColor3 = autoGroupEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
+        GroupToggle.Text = autoGroupEnabled and "Auto Group Reward: ON" or "Auto Group Reward: OFF"
+    end)
 
-        if autoEverythingEnabled then
-            EverythingToggle.BackgroundColor3 = Color3.fromRGB(40, 150, 80)
-            EverythingToggle.Text = "Auto Everything: ON"
-        else
-            EverythingToggle.BackgroundColor3 = Color3.fromRGB(110, 45, 135)
-            EverythingToggle.Text = "Auto Everything: OFF"
+    local KeybindButton = Instance.new("TextButton")
+    styleButton(KeybindButton, "Minimize Menu Key: F", 705, 40, false, Color3.fromRGB(30, 30, 32))
+    
+    KeybindButton.MouseButton1Click:Connect(function()
+        if not scriptRunning or isBindingEverything then return end
+        isBindingMenu = true
+        KeybindButton.Text = "Press any key..."
+        KeybindButton.BackgroundColor3 = Color3.fromRGB(0, 130, 220)
+    end)
+
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        
+        if isBindingMenu and input.UserInputType == Enum.UserInputType.Keyboard then
+            currentKeybind = input.KeyCode
+            isBindingMenu = false
+            KeybindButton.Text = "Minimize Menu Key: " .. input.KeyCode.Name
+            KeybindButton.BackgroundColor3 = Color3.fromRGB(30, 30, 32)
+            return
         end
 
-        ToggleButton1.BackgroundColor3 = autoLootEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
-        ToggleButton1.Text = autoLootEnabled and "Auto Loot: ON" or "Auto Loot: OFF"
+        if isBindingEverything and input.UserInputType == Enum.UserInputType.Keyboard then
+            autoEverythingKeybind = input.KeyCode
+            isBindingEverything = false
+            EverythingKeybindButton.Text = "Auto Everything Key: " .. input.KeyCode.Name
+            EverythingKeybindButton.BackgroundColor3 = Color3.fromRGB(44, 44, 48)
+            return
+        end
+        
+        if input.KeyCode == currentKeybind and scriptRunning and not isBindingMenu and not isBindingEverything then
+            uiVisible = not uiVisible
+            MainFrame.Visible = uiVisible
+        end
 
-        ToggleButton.BackgroundColor3 = autoCollectEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
-        ToggleButton.Text = autoCollectEnabled and "Auto Collect: ON" or "Auto Collect: OFF"
-
-        DepositToggle.BackgroundColor3 = autoDepositEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
-        DepositToggle.Text = autoDepositEnabled and "Auto Deposit: ON" or "Auto Deposit: OFF"
-
-        BuyToggle.BackgroundColor3 = autoBuyEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
-        BuyToggle.Text = autoBuyEnabled and "Auto Buy: ON" or "Auto Buy: OFF"
-
-        MergeToggle.BackgroundColor3 = autoMergeEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
-        MergeToggle.Text = autoMergeEnabled and "Auto Merge: ON" or "Auto Merge: OFF"
-
-        AntiLagToggle.BackgroundColor3 = antiLagEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
-        AntiLagToggle.Text = antiLagEnabled and "Anti-Lag Wrecks: ON" or "Anti-Lag Wrecks: OFF"
+        if input.KeyCode == autoEverythingKeybind and scriptRunning and not isBindingMenu and not isBindingEverything then
+            toggleEverythingRoutine()
+        end
     end)
 
     UnloadButton.MouseButton1Click:Connect(function()
@@ -325,6 +414,7 @@ task.spawn(function()
         autoMergeEnabled = false
         antiLagEnabled = false
         autoDeleteChestsEnabled = false
+        autoGroupEnabled = false
         autoEverythingEnabled = false
         task.wait(0.05) 
         ScreenGui:Destroy()
@@ -470,6 +560,32 @@ task.spawn(function()
                 end
             end
             task.wait(0.2)
+        end
+    end)
+
+    task.spawn(function()
+        while scriptRunning do
+            if autoGroupEnabled and scriptRunning then
+                if myPlot then
+                    local groupReward = myPlot:FindFirstChild("GroupReward")
+                    local collectButtonFolder = groupReward and groupReward:FindFirstChild("CollectButton")
+                    local targetButton = collectButtonFolder and collectButtonFolder:FindFirstChild("Button")
+                    local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+                    
+                    if targetButton and rootPart then
+                        local touchInterest = targetButton:FindFirstChildOfClass("TouchTransmitter") or targetButton:FindFirstChild("TouchInterest")
+                        if touchInterest then
+                            firetouchinterest(targetButton, rootPart, 0)
+                            task.wait()
+                            firetouchinterest(targetButton, rootPart, 1)
+                        end
+                    end
+                else
+                    local currentButton = getNearestButton()
+                    if currentButton then myPlot = currentButton.Parent.Parent.Parent end
+                end
+            end
+            task.wait(5.0)
         end
     end)
 end)
