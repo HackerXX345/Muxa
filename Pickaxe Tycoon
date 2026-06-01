@@ -1,0 +1,437 @@
+task.spawn(function()
+    local Players = game:GetService("Players")
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local Workspace = game:GetService("Workspace")
+    local player = Players.LocalPlayer
+    local plots = workspace.Plots
+    local character = player.Character or player.CharacterAdded:Wait()
+
+    -- Top-level variable visible to all blocks
+    local myPlot = nil 
+
+    local function getNearestButton()
+        local player = Players.LocalPlayer
+        if not player or not player.Character then return nil end
+        local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
+        if not rootPart then return nil end
+
+        local closestButton = nil
+        local shortestDistance = math.huge
+
+        for _, object in ipairs(Workspace:GetDescendants()) do
+            if object:IsA("MeshPart") and object.Name == "Button" then
+                local distance = (rootPart.Position - object.Position).Magnitude
+                if distance < shortestDistance then
+                    shortestDistance = distance
+                    closestButton = object
+                end
+            end
+        end
+
+        return closestButton, shortestDistance
+    end
+
+    -- Run function once at startup to assign your plot
+    local nearestButton, dist = getNearestButton()
+    if nearestButton then
+        print("The nearest button is: " .. nearestButton:GetFullName() .. " at " .. tostring(math.round(dist)) .. " studs away.")
+        myPlot = nearestButton.Parent.Parent.Parent
+        print("Successfully set myPlot to: " .. myPlot.Name)
+    else
+        print("No MeshPart named 'Button' was found in the workspace at script launch.")
+    end
+
+    -- TOGGLE STATES
+    local autoLootEnabled = false
+    local scriptRunning = true
+    local autoCollectEnabled = false
+    local autoDepositEnabled = false
+    local autoBuyEnabled = false        -- Changed from autoBuy1
+    local buyAmount = 1                 -- Holds current selection: 1, 5, 25, or 100
+    local autoMergeEnabled = false      
+    local autoEverythingEnabled = false
+
+    -- UI Setup & Duplicate Clean
+    local targetParent = game:GetService("CoreGui") or player:WaitForChild("PlayerGui")
+    if targetParent:FindFirstChild("SimpleMenu") then targetParent.SimpleMenu:Destroy() end
+
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "SimpleMenu"
+    ScreenGui.Parent = targetParent
+
+    -- Main Window (Increased height to 555 to fit the new selection row)
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Size = UDim2.new(0, 200, 0, 555)
+    MainFrame.Position = UDim2.new(0.5, -100, 0.3, -277)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    MainFrame.Draggable = true
+    MainFrame.Active = true
+    MainFrame.Parent = ScreenGui
+
+    -- Close / Unload Button
+    local UnloadButton = Instance.new("TextButton")
+    UnloadButton.Size = UDim2.new(0, 25, 0, 25)
+    UnloadButton.Position = UDim2.new(1, -30, 0, 5)
+    UnloadButton.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+    UnloadButton.Text = "X"
+    UnloadButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    UnloadButton.Parent = MainFrame
+
+    -- BUTTON: Buy 100
+    local SimpleButton = Instance.new("TextButton")
+    SimpleButton.Size = UDim2.new(0, 180, 0, 40)
+    SimpleButton.Position = UDim2.new(0, 10, 0, 40)
+    SimpleButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    SimpleButton.Text = "Buy 100"
+    SimpleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    SimpleButton.Parent = MainFrame
+
+    SimpleButton.MouseButton1Click:Connect(function()
+        task.spawn(function()
+            if myPlot and scriptRunning then
+                local buttonsFolder = myPlot:FindFirstChild("Buttons")
+                local buy100Folder = buttonsFolder and buttonsFolder:FindFirstChild("ButtonBuy100")
+                local targetButton = buy100Folder and buy100Folder:FindFirstChild("Button")
+                local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+                
+                if targetButton and rootPart then
+                    local touchInterest = targetButton:FindFirstChildOfClass("TouchTransmitter") or targetButton:FindFirstChild("TouchInterest")
+                    if touchInterest then
+                        firetouchinterest(targetButton, rootPart, 0)
+                        task.wait()
+                        firetouchinterest(targetButton, rootPart, 1)
+                    end
+                end
+            end
+        end)
+    end)
+
+    -- BUTTON: Upgrade Plot
+    local UpgradeButton = Instance.new("TextButton")
+    UpgradeButton.Size = UDim2.new(0, 180, 0, 40)
+    UpgradeButton.Position = UDim2.new(0, 10, 0, 95)
+    UpgradeButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    UpgradeButton.Text = "Upgrade Plot"
+    UpgradeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    UpgradeButton.Parent = MainFrame
+
+    UpgradeButton.MouseButton1Click:Connect(function()
+        task.spawn(function()
+            if myPlot and scriptRunning then
+                local sellModel = myPlot:FindFirstChild("Sell")
+                local upgradeFolder = sellModel and sellModel:FindFirstChild("UpgradeButton")
+                local targetButton = upgradeFolder and upgradeFolder:FindFirstChild("Button")
+                local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+                
+                if targetButton and rootPart then
+                    local touchInterest = targetButton:FindFirstChildOfClass("TouchTransmitter") or targetButton:FindFirstChild("TouchInterest")
+                    if touchInterest then
+                        firetouchinterest(targetButton, rootPart, 0)
+                        task.wait()
+                        firetouchinterest(targetButton, rootPart, 1)
+                    end
+                end
+            end
+        end)
+    end)
+
+    -- TOGGLE BUTTON: Auto Loot
+    local ToggleButton1 = Instance.new("TextButton")
+    ToggleButton1.Size = UDim2.new(0, 180, 0, 40)
+    ToggleButton1.Position = UDim2.new(0, 10, 0, 150)
+    ToggleButton1.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+    ToggleButton1.Text = "Auto Loot: OFF"
+    ToggleButton1.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ToggleButton1.Parent = MainFrame
+
+    ToggleButton1.MouseButton1Click:Connect(function()
+        if not scriptRunning then return end
+        autoLootEnabled = not autoLootEnabled
+        ToggleButton1.BackgroundColor3 = autoLootEnabled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
+        ToggleButton1.Text = autoLootEnabled and "Auto Loot: ON" or "Auto Loot: OFF"
+    end)
+
+    -- TOGGLE BUTTON: Auto Collect
+    local ToggleButton = Instance.new("TextButton")
+    ToggleButton.Size = UDim2.new(0, 180, 0, 40)
+    ToggleButton.Position = UDim2.new(0, 10, 0, 205)
+    ToggleButton.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+    ToggleButton.Text = "Auto Collect: OFF"
+    ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ToggleButton.Parent = MainFrame
+
+    ToggleButton.MouseButton1Click:Connect(function()
+        if not scriptRunning then return end
+        autoCollectEnabled = not autoCollectEnabled
+        ToggleButton.BackgroundColor3 = autoCollectEnabled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
+        ToggleButton.Text = autoCollectEnabled and "Auto Collect: ON" or "Auto Collect: OFF"
+    end)
+
+    -- TOGGLE BUTTON: Auto Deposit
+    local DepositToggle = Instance.new("TextButton")
+    DepositToggle.Size = UDim2.new(0, 180, 0, 40)
+    DepositToggle.Position = UDim2.new(0, 10, 0, 260)
+    DepositToggle.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+    DepositToggle.Text = "Auto Deposit: OFF"
+    DepositToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    DepositToggle.Parent = MainFrame
+
+    DepositToggle.MouseButton1Click:Connect(function()
+        if not scriptRunning then return end
+        autoDepositEnabled = not autoDepositEnabled
+        DepositToggle.BackgroundColor3 = autoDepositEnabled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
+        DepositToggle.Text = autoDepositEnabled and "Auto Deposit: ON" or "Auto Deposit: OFF"
+    end)
+
+    -- CHANGED TOGGLE BUTTON: General Auto Buy
+    local BuyToggle = Instance.new("TextButton")
+    BuyToggle.Size = UDim2.new(0, 180, 0, 40)
+    BuyToggle.Position = UDim2.new(0, 10, 0, 315)
+    BuyToggle.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+    BuyToggle.Text = "Auto Buy: OFF"
+    BuyToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    BuyToggle.Parent = MainFrame
+
+    BuyToggle.MouseButton1Click:Connect(function()
+        if not scriptRunning then return end
+        autoBuyEnabled = not autoBuyEnabled
+        BuyToggle.BackgroundColor3 = autoBuyEnabled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
+        BuyToggle.Text = autoBuyEnabled and "Auto Buy: ON" or "Auto Buy: OFF"
+    end)
+
+    -- NEW SELECTION ROW: Amount Choices (1, 5, 25, 100) placed beneath Auto Buy
+    local amounts = {1, 5, 25, 100}
+    local amountButtons = {}
+    local startX = 10
+    local totalWidth = 180
+    local buttonWidth = 40
+    local gap = (totalWidth - (buttonWidth * 4)) / 3 -- Math to automatically gap layout perfectly
+
+    for index, amt in ipairs(amounts) do
+        local AmtBtn = Instance.new("TextButton")
+        AmtBtn.Size = UDim2.new(0, buttonWidth, 0, 30)
+        AmtBtn.Position = UDim2.new(0, startX + ((index - 1) * (buttonWidth + gap)), 0, 360) -- Row height 360
+        AmtBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        AmtBtn.Text = tostring(amt)
+        AmtBtn.Parent = MainFrame
+        
+        -- Default highlights the "1" selection first
+        if amt == buyAmount then
+            AmtBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 200) -- Selected Bright Blue
+        else
+            AmtBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)   -- Dark Unselected Gray
+        end
+
+        AmtBtn.MouseButton1Click:Connect(function()
+            if not scriptRunning then return end
+            buyAmount = amt
+            -- Update UI colors across array
+            for _, btn in ipairs(amountButtons) do
+                if btn.Text == tostring(buyAmount) then
+                    btn.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
+                else
+                    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                end
+            end
+            print("Switched Auto Buy targets to: ButtonBuy" .. tostring(buyAmount))
+        end)
+
+        table.insert(amountButtons, AmtBtn)
+    end
+
+    -- TOGGLE BUTTON: Auto Merge (Shifted position downward)
+    local MergeToggle = Instance.new("TextButton")
+    MergeToggle.Size = UDim2.new(0, 180, 0, 40)
+    MergeToggle.Position = UDim2.new(0, 10, 0, 405)
+    MergeToggle.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+    MergeToggle.Text = "Auto Merge: OFF"
+    MergeToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    MergeToggle.Parent = MainFrame
+
+    MergeToggle.MouseButton1Click:Connect(function()
+        if not scriptRunning then return end
+        autoMergeEnabled = not autoMergeEnabled
+        MergeToggle.BackgroundColor3 = autoMergeEnabled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
+        MergeToggle.Text = autoMergeEnabled and "Auto Merge: ON" or "Auto Merge: OFF"
+    end)
+
+    -- MASTER TOGGLE BUTTON: Auto Everything (Shifted position downward)
+    local EverythingToggle = Instance.new("TextButton")
+    EverythingToggle.Size = UDim2.new(0, 180, 0, 40)
+    EverythingToggle.Position = UDim2.new(0, 10, 0, 460)
+    EverythingToggle.BackgroundColor3 = Color3.fromRGB(120, 40, 150)
+    EverythingToggle.Text = "Auto Everything: OFF"
+    EverythingToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    EverythingToggle.Font = Enum.Font.SourceSansBold
+    EverythingToggle.Parent = MainFrame
+
+    EverythingToggle.MouseButton1Click:Connect(function()
+        if not scriptRunning then return end
+        autoEverythingEnabled = not autoEverythingEnabled
+        
+        autoLootEnabled = autoEverythingEnabled
+        autoCollectEnabled = autoEverythingEnabled
+        autoDepositEnabled = autoEverythingEnabled
+        autoBuyEnabled = autoEverythingEnabled
+        autoMergeEnabled = autoEverythingEnabled 
+
+        if autoEverythingEnabled then
+            EverythingToggle.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+            EverythingToggle.Text = "Auto Everything: ON"
+        else
+            EverythingToggle.BackgroundColor3 = Color3.fromRGB(120, 40, 150)
+            EverythingToggle.Text = "Auto Everything: OFF"
+        end
+
+        ToggleButton1.BackgroundColor3 = autoLootEnabled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
+        ToggleButton1.Text = autoLootEnabled and "Auto Loot: ON" or "Auto Loot: OFF"
+
+        ToggleButton.BackgroundColor3 = autoCollectEnabled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
+        ToggleButton.Text = autoCollectEnabled and "Auto Collect: ON" or "Auto Collect: OFF"
+
+        DepositToggle.BackgroundColor3 = autoDepositEnabled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
+        DepositToggle.Text = autoDepositEnabled and "Auto Deposit: ON" or "Auto Deposit: OFF"
+
+        BuyToggle.BackgroundColor3 = autoBuyEnabled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
+        BuyToggle.Text = autoBuyEnabled and "Auto Buy: ON" or "Auto Buy: OFF"
+
+        MergeToggle.BackgroundColor3 = autoMergeEnabled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
+        MergeToggle.Text = autoMergeEnabled and "Auto Merge: ON" or "Auto Merge: OFF"
+    end)
+
+    -- Clean shutdown execution for Unload (X) button
+    UnloadButton.MouseButton1Click:Connect(function()
+        scriptRunning = false
+        autoLootEnabled = false
+        autoCollectEnabled = false
+        autoDepositEnabled = false
+        autoBuyEnabled = false
+        autoMergeEnabled = false
+        autoEverythingEnabled = false
+        task.wait(0.05) 
+        ScreenGui:Destroy()
+    end)
+
+    -- LOOP 1: Auto Loot (0.01s delay)
+    task.spawn(function()
+        local lootRemote = ReplicatedStorage:WaitForChild("RemoteEvents"):WaitForChild("LootPickup")
+        local i = 1
+        while scriptRunning do
+            if autoLootEnabled and scriptRunning then
+                lootRemote:FireServer({[1] = i})
+                i = (i % 10) + 1
+            end
+            task.wait(0.01)
+        end
+    end)
+
+    -- LOOP 2: Auto Collect (0.1s delay)
+    task.spawn(function()
+        while scriptRunning do
+            if autoCollectEnabled and scriptRunning then
+                if myPlot then
+                    local sellModel = myPlot:FindFirstChild("Sell")
+                    local collectButton = sellModel and sellModel:FindFirstChild("CollectButton")
+                    local targetButton = collectButton and collectButton:FindFirstChild("Button")
+                    local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+                    
+                    if targetButton and rootPart then
+                        local touchInterest = targetButton:FindFirstChildOfClass("TouchTransmitter") or targetButton:FindFirstChild("TouchInterest")
+                        if touchInterest then
+                            firetouchinterest(targetButton, rootPart, 0)
+                            task.wait()
+                            firetouchinterest(targetButton, rootPart, 1)
+                        end
+                    end
+                else
+                    local currentButton = getNearestButton()
+                    if currentButton then myPlot = currentButton.Parent.Parent.Parent end
+                end
+            end
+            task.wait(0.1)
+        end
+    end)
+
+    -- LOOP 3: Auto Deposit (0.1s delay)
+    task.spawn(function()
+        while scriptRunning do
+            if autoDepositEnabled and scriptRunning then
+                if myPlot then
+                    local sellModel = myPlot:FindFirstChild("Sell")
+                    local depositButtonFolder = sellModel and sellModel:FindFirstChild("DepositButton")
+                    local targetButton = depositButtonFolder and depositButtonFolder:FindFirstChild("Button")
+                    local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+                    
+                    if targetButton and rootPart then
+                        local touchInterest = targetButton:FindFirstChildOfClass("TouchTransmitter") or targetButton:FindFirstChild("TouchInterest")
+                        if touchInterest then
+                            firetouchinterest(targetButton, rootPart, 0)
+                            task.wait()
+                            firetouchinterest(targetButton, rootPart, 1)
+                        end
+                    end
+                else
+                    local currentButton = getNearestButton()
+                    if currentButton then myPlot = currentButton.Parent.Parent.Parent end
+                end
+            end
+            task.wait(0.1)
+        end
+    end)
+
+    -- LOOP 4: Dynamic Auto Buy (0.1s delay - String paths change according to selection state)
+    task.spawn(function()
+        while scriptRunning do
+            if autoBuyEnabled and scriptRunning then
+                if myPlot then
+                    local buttonsFolder = myPlot:FindFirstChild("Buttons")
+                    -- Dynamically build folder name based on current choice: "ButtonBuy1", "ButtonBuy5", etc.
+                    local dynamicFolderName = "ButtonBuy" .. tostring(buyAmount)
+                    local buyFolder = buttonsFolder and buttonsFolder:FindFirstChild(dynamicFolderName)
+                    local targetButton = buyFolder and buyFolder:FindFirstChild("Button")
+                    local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+                    
+                    if targetButton and rootPart then
+                        local touchInterest = targetButton:FindFirstChildOfClass("TouchTransmitter") or targetButton:FindFirstChild("TouchInterest")
+                        if touchInterest then
+                            firetouchinterest(targetButton, rootPart, 0)
+                            task.wait()
+                            firetouchinterest(targetButton, rootPart, 1)
+                        end
+                    end
+                else
+                    local currentButton = getNearestButton()
+                    if currentButton then myPlot = currentButton.Parent.Parent.Parent end
+                end
+            end
+            task.wait(0.1)
+        end
+    end)
+
+    -- LOOP 5: Auto Merge (0.1s delay)
+    task.spawn(function()
+        while scriptRunning do
+            if autoMergeEnabled and scriptRunning then
+                if myPlot then
+                    local buttonsFolder = myPlot:FindFirstChild("Buttons")
+                    local mergeFolder = buttonsFolder and buttonsFolder:FindFirstChild("ButtonMerge")
+                    local targetButton = mergeFolder and mergeFolder:FindFirstChild("Button")
+                    local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+                    
+                    if targetButton and rootPart then
+                        local touchInterest = targetButton:FindFirstChildOfClass("TouchTransmitter") or targetButton:FindFirstChild("TouchInterest")
+                        if touchInterest then
+                            firetouchinterest(targetButton, rootPart, 0)
+                            task.wait()
+                            firetouchinterest(targetButton, rootPart, 1)
+                        end
+                    end
+                else
+                    local currentButton = getNearestButton()
+                    if currentButton then myPlot = currentButton.Parent.Parent.Parent end
+                end
+            end
+            task.wait(0.1)
+        end
+    end)
+end)
