@@ -6,7 +6,6 @@ task.spawn(function()
     local plots = workspace.Plots
     local character = player.Character or player.CharacterAdded:Wait()
 
-    -- Top-level variable visible to all blocks
     local myPlot = nil 
 
     local function getNearestButton()
@@ -31,27 +30,22 @@ task.spawn(function()
         return closestButton, shortestDistance
     end
 
-    -- Run function once at startup to assign your plot
     local nearestButton, dist = getNearestButton()
     if nearestButton then
-        print("The nearest button is: " .. nearestButton:GetFullName() .. " at " .. tostring(math.round(dist)) .. " studs away.")
         myPlot = nearestButton.Parent.Parent.Parent
-        print("Successfully set myPlot to: " .. myPlot.Name)
-    else
-        print("No MeshPart named 'Button' was found in the workspace at script launch.")
     end
 
-    -- TOGGLE STATES
     local autoLootEnabled = false
     local scriptRunning = true
     local autoCollectEnabled = false
     local autoDepositEnabled = false
-    local autoBuyEnabled = false        -- Changed from autoBuy1
-    local buyAmount = 1                 -- Holds current selection: 1, 5, 25, or 100
+    local autoBuyEnabled = false        
+    local buyAmount = 1                 
     local autoMergeEnabled = false      
+    local antiLagEnabled = false        
+    local autoDeleteChestsEnabled = false 
     local autoEverythingEnabled = false
 
-    -- UI Setup & Duplicate Clean
     local targetParent = game:GetService("CoreGui") or player:WaitForChild("PlayerGui")
     if targetParent:FindFirstChild("SimpleMenu") then targetParent.SimpleMenu:Destroy() end
 
@@ -59,32 +53,70 @@ task.spawn(function()
     ScreenGui.Name = "SimpleMenu"
     ScreenGui.Parent = targetParent
 
-    -- Main Window (Increased height to 555 to fit the new selection row)
     local MainFrame = Instance.new("Frame")
-    MainFrame.Size = UDim2.new(0, 200, 0, 555)
-    MainFrame.Position = UDim2.new(0.5, -100, 0.3, -277)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    MainFrame.Size = UDim2.new(0, 220, 0, 685)
+    MainFrame.Position = UDim2.new(0.5, -110, 0.3, -342)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 26)
+    MainFrame.BorderSizePixel = 0
     MainFrame.Draggable = true
     MainFrame.Active = true
     MainFrame.Parent = ScreenGui
 
-    -- Close / Unload Button
+    local MainCorner = Instance.new("UICorner")
+    MainCorner.CornerRadius = UDim.new(0, 10)
+    MainCorner.Parent = MainFrame
+
+    local AccentBorder = Instance.new("Frame")
+    AccentBorder.Size = UDim2.new(1, 0, 0, 2)
+    AccentBorder.Position = UDim2.new(0, 0, 0, 35)
+    AccentBorder.BackgroundColor3 = Color3.fromRGB(120, 40, 150)
+    AccentBorder.BorderSizePixel = 0
+    AccentBorder.Parent = MainFrame
+
+    local TitleLabel = Instance.new("TextLabel")
+    TitleLabel.Size = UDim2.new(1, -40, 0, 35)
+    TitleLabel.Position = UDim2.new(0, 12, 0, 0)
+    TitleLabel.BackgroundTransparency = 1
+    TitleLabel.Text = "Pickaxe Tycoon Script by Muxa"
+    TitleLabel.TextColor3 = Color3.fromRGB(235, 235, 240)
+    TitleLabel.TextSize = 13
+    TitleLabel.Font = Enum.Font.GothamBold
+    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TitleLabel.Parent = MainFrame
+
     local UnloadButton = Instance.new("TextButton")
-    UnloadButton.Size = UDim2.new(0, 25, 0, 25)
-    UnloadButton.Position = UDim2.new(1, -30, 0, 5)
-    UnloadButton.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
-    UnloadButton.Text = "X"
+    UnloadButton.Size = UDim2.new(0, 22, 0, 22)
+    UnloadButton.Position = UDim2.new(1, -28, 0, 6)
+    UnloadButton.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
+    UnloadButton.BorderSizePixel = 0
+    UnloadButton.Text = "×"
+    UnloadButton.TextSize = 20
     UnloadButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    UnloadButton.Font = Enum.Font.GothamBold
     UnloadButton.Parent = MainFrame
 
-    -- BUTTON: Buy 100
+    local UnloadCorner = Instance.new("UICorner")
+    UnloadCorner.CornerRadius = UDim.new(0, 6)
+    UnloadCorner.Parent = UnloadButton
+
+    local function styleButton(btn, text, yPos, height, isToggle, defaultColor)
+        btn.Size = UDim2.new(0, 200, 0, height)
+        btn.Position = UDim2.new(0, 10, 0, yPos)
+        btn.BackgroundColor3 = defaultColor or Color3.fromRGB(40, 40, 44)
+        btn.BorderSizePixel = 0
+        btn.Text = text
+        btn.TextColor3 = Color3.fromRGB(240, 240, 245)
+        btn.TextSize = 13
+        btn.Font = Enum.Font.GothamBold
+        btn.Parent = MainFrame
+
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 6)
+        corner.Parent = btn
+    end
+
     local SimpleButton = Instance.new("TextButton")
-    SimpleButton.Size = UDim2.new(0, 180, 0, 40)
-    SimpleButton.Position = UDim2.new(0, 10, 0, 40)
-    SimpleButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-    SimpleButton.Text = "Buy 100"
-    SimpleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    SimpleButton.Parent = MainFrame
+    styleButton(SimpleButton, "Buy 100", 55, 40)
 
     SimpleButton.MouseButton1Click:Connect(function()
         task.spawn(function()
@@ -106,14 +138,8 @@ task.spawn(function()
         end)
     end)
 
-    -- BUTTON: Upgrade Plot
     local UpgradeButton = Instance.new("TextButton")
-    UpgradeButton.Size = UDim2.new(0, 180, 0, 40)
-    UpgradeButton.Position = UDim2.new(0, 10, 0, 95)
-    UpgradeButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-    UpgradeButton.Text = "Upgrade Plot"
-    UpgradeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    UpgradeButton.Parent = MainFrame
+    styleButton(UpgradeButton, "Upgrade Plot", 105, 40)
 
     UpgradeButton.MouseButton1Click:Connect(function()
         task.spawn(function()
@@ -135,135 +161,122 @@ task.spawn(function()
         end)
     end)
 
-    -- TOGGLE BUTTON: Auto Loot
     local ToggleButton1 = Instance.new("TextButton")
-    ToggleButton1.Size = UDim2.new(0, 180, 0, 40)
-    ToggleButton1.Position = UDim2.new(0, 10, 0, 150)
-    ToggleButton1.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
-    ToggleButton1.Text = "Auto Loot: OFF"
-    ToggleButton1.TextColor3 = Color3.fromRGB(255, 255, 255)
-    ToggleButton1.Parent = MainFrame
+    styleButton(ToggleButton1, "Auto Loot: OFF", 160, 40, true, Color3.fromRGB(160, 60, 60))
 
     ToggleButton1.MouseButton1Click:Connect(function()
         if not scriptRunning then return end
         autoLootEnabled = not autoLootEnabled
-        ToggleButton1.BackgroundColor3 = autoLootEnabled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
+        ToggleButton1.BackgroundColor3 = autoLootEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
         ToggleButton1.Text = autoLootEnabled and "Auto Loot: ON" or "Auto Loot: OFF"
     end)
 
-    -- TOGGLE BUTTON: Auto Collect
     local ToggleButton = Instance.new("TextButton")
-    ToggleButton.Size = UDim2.new(0, 180, 0, 40)
-    ToggleButton.Position = UDim2.new(0, 10, 0, 205)
-    ToggleButton.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
-    ToggleButton.Text = "Auto Collect: OFF"
-    ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    ToggleButton.Parent = MainFrame
+    styleButton(ToggleButton, "Auto Collect: OFF", 215, 40, true, Color3.fromRGB(160, 60, 60))
 
     ToggleButton.MouseButton1Click:Connect(function()
         if not scriptRunning then return end
         autoCollectEnabled = not autoCollectEnabled
-        ToggleButton.BackgroundColor3 = autoCollectEnabled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
+        ToggleButton.BackgroundColor3 = autoCollectEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
         ToggleButton.Text = autoCollectEnabled and "Auto Collect: ON" or "Auto Collect: OFF"
     end)
 
-    -- TOGGLE BUTTON: Auto Deposit
     local DepositToggle = Instance.new("TextButton")
-    DepositToggle.Size = UDim2.new(0, 180, 0, 40)
-    DepositToggle.Position = UDim2.new(0, 10, 0, 260)
-    DepositToggle.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
-    DepositToggle.Text = "Auto Deposit: OFF"
-    DepositToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-    DepositToggle.Parent = MainFrame
+    styleButton(DepositToggle, "Auto Deposit: OFF", 270, 40, true, Color3.fromRGB(160, 60, 60))
 
     DepositToggle.MouseButton1Click:Connect(function()
         if not scriptRunning then return end
         autoDepositEnabled = not autoDepositEnabled
-        DepositToggle.BackgroundColor3 = autoDepositEnabled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
+        DepositToggle.BackgroundColor3 = autoDepositEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
         DepositToggle.Text = autoDepositEnabled and "Auto Deposit: ON" or "Auto Deposit: OFF"
     end)
 
-    -- CHANGED TOGGLE BUTTON: General Auto Buy
     local BuyToggle = Instance.new("TextButton")
-    BuyToggle.Size = UDim2.new(0, 180, 0, 40)
-    BuyToggle.Position = UDim2.new(0, 10, 0, 315)
-    BuyToggle.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
-    BuyToggle.Text = "Auto Buy: OFF"
-    BuyToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-    BuyToggle.Parent = MainFrame
+    styleButton(BuyToggle, "Auto Buy: OFF", 325, 40, true, Color3.fromRGB(160, 60, 60))
 
     BuyToggle.MouseButton1Click:Connect(function()
         if not scriptRunning then return end
         autoBuyEnabled = not autoBuyEnabled
-        BuyToggle.BackgroundColor3 = autoBuyEnabled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
+        BuyToggle.BackgroundColor3 = autoBuyEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
         BuyToggle.Text = autoBuyEnabled and "Auto Buy: ON" or "Auto Buy: OFF"
     end)
 
-    -- NEW SELECTION ROW: Amount Choices (1, 5, 25, 100) placed beneath Auto Buy
     local amounts = {1, 5, 25, 100}
     local amountButtons = {}
     local startX = 10
-    local totalWidth = 180
-    local buttonWidth = 40
-    local gap = (totalWidth - (buttonWidth * 4)) / 3 -- Math to automatically gap layout perfectly
+    local totalWidth = 200
+    local buttonWidth = 44
+    local gap = (totalWidth - (buttonWidth * 4)) / 3 
 
     for index, amt in ipairs(amounts) do
         local AmtBtn = Instance.new("TextButton")
         AmtBtn.Size = UDim2.new(0, buttonWidth, 0, 30)
-        AmtBtn.Position = UDim2.new(0, startX + ((index - 1) * (buttonWidth + gap)), 0, 360) -- Row height 360
-        AmtBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        AmtBtn.Position = UDim2.new(0, startX + ((index - 1) * (buttonWidth + gap)), 0, 375) 
+        AmtBtn.BorderSizePixel = 0
+        AmtBtn.TextColor3 = Color3.fromRGB(240, 240, 245)
         AmtBtn.Text = tostring(amt)
+        AmtBtn.Font = Enum.Font.GothamBold
+        AmtBtn.TextSize = 12
         AmtBtn.Parent = MainFrame
         
-        -- Default highlights the "1" selection first
+        local btnCorner = Instance.new("UICorner")
+        btnCorner.CornerRadius = UDim.new(0, 5)
+        btnCorner.Parent = AmtBtn
+        
         if amt == buyAmount then
-            AmtBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 200) -- Selected Bright Blue
+            AmtBtn.BackgroundColor3 = Color3.fromRGB(0, 130, 220) 
         else
-            AmtBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)   -- Dark Unselected Gray
+            AmtBtn.BackgroundColor3 = Color3.fromRGB(44, 44, 48)   
         end
 
         AmtBtn.MouseButton1Click:Connect(function()
             if not scriptRunning then return end
             buyAmount = amt
-            -- Update UI colors across array
             for _, btn in ipairs(amountButtons) do
                 if btn.Text == tostring(buyAmount) then
-                    btn.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
+                    btn.BackgroundColor3 = Color3.fromRGB(0, 130, 220)
                 else
-                    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                    btn.BackgroundColor3 = Color3.fromRGB(44, 44, 48)
                 end
             end
-            print("Switched Auto Buy targets to: ButtonBuy" .. tostring(buyAmount))
         end)
 
         table.insert(amountButtons, AmtBtn)
     end
 
-    -- TOGGLE BUTTON: Auto Merge (Shifted position downward)
     local MergeToggle = Instance.new("TextButton")
-    MergeToggle.Size = UDim2.new(0, 180, 0, 40)
-    MergeToggle.Position = UDim2.new(0, 10, 0, 405)
-    MergeToggle.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
-    MergeToggle.Text = "Auto Merge: OFF"
-    MergeToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-    MergeToggle.Parent = MainFrame
+    styleButton(MergeToggle, "Auto Merge: OFF", 420, 40, true, Color3.fromRGB(160, 60, 60))
 
     MergeToggle.MouseButton1Click:Connect(function()
         if not scriptRunning then return end
         autoMergeEnabled = not autoMergeEnabled
-        MergeToggle.BackgroundColor3 = autoMergeEnabled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
+        MergeToggle.BackgroundColor3 = autoMergeEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
         MergeToggle.Text = autoMergeEnabled and "Auto Merge: ON" or "Auto Merge: OFF"
     end)
 
-    -- MASTER TOGGLE BUTTON: Auto Everything (Shifted position downward)
+    local AntiLagToggle = Instance.new("TextButton")
+    styleButton(AntiLagToggle, "Anti-Lag Wrecks: OFF", 475, 40, true, Color3.fromRGB(160, 60, 60))
+
+    AntiLagToggle.MouseButton1Click:Connect(function()
+        if not scriptRunning then return end
+        antiLagEnabled = not antiLagEnabled
+        AntiLagToggle.BackgroundColor3 = antiLagEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
+        AntiLagToggle.Text = antiLagEnabled and "Anti-Lag Wrecks: ON" or "Anti-Lag Wrecks: OFF"
+    end)
+
+    local DeleteChestsToggle = Instance.new("TextButton")
+    styleButton(DeleteChestsToggle, "Auto Delete Chests: OFF", 530, 40, true, Color3.fromRGB(160, 60, 60))
+
+    DeleteChestsToggle.MouseButton1Click:Connect(function()
+        if not scriptRunning then return end
+        autoDeleteChestsEnabled = not autoDeleteChestsEnabled
+        DeleteChestsToggle.BackgroundColor3 = autoDeleteChestsEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
+        DeleteChestsToggle.Text = autoDeleteChestsEnabled and "Auto Delete Chests: ON" or "Auto Delete Chests: OFF"
+    end)
+
     local EverythingToggle = Instance.new("TextButton")
-    EverythingToggle.Size = UDim2.new(0, 180, 0, 40)
-    EverythingToggle.Position = UDim2.new(0, 10, 0, 460)
-    EverythingToggle.BackgroundColor3 = Color3.fromRGB(120, 40, 150)
-    EverythingToggle.Text = "Auto Everything: OFF"
-    EverythingToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-    EverythingToggle.Font = Enum.Font.SourceSansBold
-    EverythingToggle.Parent = MainFrame
+    styleButton(EverythingToggle, "Auto Everything: OFF", 585, 40, true, Color3.fromRGB(110, 45, 135))
+    EverythingToggle.Font = Enum.Font.GothamBold
 
     EverythingToggle.MouseButton1Click:Connect(function()
         if not scriptRunning then return end
@@ -274,32 +287,35 @@ task.spawn(function()
         autoDepositEnabled = autoEverythingEnabled
         autoBuyEnabled = autoEverythingEnabled
         autoMergeEnabled = autoEverythingEnabled 
+        antiLagEnabled = autoEverythingEnabled 
 
         if autoEverythingEnabled then
-            EverythingToggle.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+            EverythingToggle.BackgroundColor3 = Color3.fromRGB(40, 150, 80)
             EverythingToggle.Text = "Auto Everything: ON"
         else
-            EverythingToggle.BackgroundColor3 = Color3.fromRGB(120, 40, 150)
+            EverythingToggle.BackgroundColor3 = Color3.fromRGB(110, 45, 135)
             EverythingToggle.Text = "Auto Everything: OFF"
         end
 
-        ToggleButton1.BackgroundColor3 = autoLootEnabled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
+        ToggleButton1.BackgroundColor3 = autoLootEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
         ToggleButton1.Text = autoLootEnabled and "Auto Loot: ON" or "Auto Loot: OFF"
 
-        ToggleButton.BackgroundColor3 = autoCollectEnabled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
+        ToggleButton.BackgroundColor3 = autoCollectEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
         ToggleButton.Text = autoCollectEnabled and "Auto Collect: ON" or "Auto Collect: OFF"
 
-        DepositToggle.BackgroundColor3 = autoDepositEnabled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
+        DepositToggle.BackgroundColor3 = autoDepositEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
         DepositToggle.Text = autoDepositEnabled and "Auto Deposit: ON" or "Auto Deposit: OFF"
 
-        BuyToggle.BackgroundColor3 = autoBuyEnabled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
+        BuyToggle.BackgroundColor3 = autoBuyEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
         BuyToggle.Text = autoBuyEnabled and "Auto Buy: ON" or "Auto Buy: OFF"
 
-        MergeToggle.BackgroundColor3 = autoMergeEnabled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(150, 50, 50)
+        MergeToggle.BackgroundColor3 = autoMergeEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
         MergeToggle.Text = autoMergeEnabled and "Auto Merge: ON" or "Auto Merge: OFF"
+
+        AntiLagToggle.BackgroundColor3 = antiLagEnabled and Color3.fromRGB(50, 160, 90) or Color3.fromRGB(160, 60, 60)
+        AntiLagToggle.Text = antiLagEnabled and "Anti-Lag Wrecks: ON" or "Anti-Lag Wrecks: OFF"
     end)
 
-    -- Clean shutdown execution for Unload (X) button
     UnloadButton.MouseButton1Click:Connect(function()
         scriptRunning = false
         autoLootEnabled = false
@@ -307,12 +323,13 @@ task.spawn(function()
         autoDepositEnabled = false
         autoBuyEnabled = false
         autoMergeEnabled = false
+        antiLagEnabled = false
+        autoDeleteChestsEnabled = false
         autoEverythingEnabled = false
         task.wait(0.05) 
         ScreenGui:Destroy()
     end)
 
-    -- LOOP 1: Auto Loot (0.01s delay)
     task.spawn(function()
         local lootRemote = ReplicatedStorage:WaitForChild("RemoteEvents"):WaitForChild("LootPickup")
         local i = 1
@@ -325,7 +342,6 @@ task.spawn(function()
         end
     end)
 
-    -- LOOP 2: Auto Collect (0.1s delay)
     task.spawn(function()
         while scriptRunning do
             if autoCollectEnabled and scriptRunning then
@@ -352,7 +368,6 @@ task.spawn(function()
         end
     end)
 
-    -- LOOP 3: Auto Deposit (0.1s delay)
     task.spawn(function()
         while scriptRunning do
             if autoDepositEnabled and scriptRunning then
@@ -379,13 +394,11 @@ task.spawn(function()
         end
     end)
 
-    -- LOOP 4: Dynamic Auto Buy (0.1s delay - String paths change according to selection state)
     task.spawn(function()
         while scriptRunning do
             if autoBuyEnabled and scriptRunning then
                 if myPlot then
                     local buttonsFolder = myPlot:FindFirstChild("Buttons")
-                    -- Dynamically build folder name based on current choice: "ButtonBuy1", "ButtonBuy5", etc.
                     local dynamicFolderName = "ButtonBuy" .. tostring(buyAmount)
                     local buyFolder = buttonsFolder and buttonsFolder:FindFirstChild(dynamicFolderName)
                     local targetButton = buyFolder and buyFolder:FindFirstChild("Button")
@@ -408,7 +421,6 @@ task.spawn(function()
         end
     end)
 
-    -- LOOP 5: Auto Merge (0.1s delay)
     task.spawn(function()
         while scriptRunning do
             if autoMergeEnabled and scriptRunning then
@@ -432,6 +444,32 @@ task.spawn(function()
                 end
             end
             task.wait(0.1)
+        end
+    end)
+
+    task.spawn(function()
+        while scriptRunning do
+            if antiLagEnabled and scriptRunning then
+                for _, object in ipairs(Workspace:GetChildren()) do
+                    if object:IsA("Model") and string.lower(object.Name):sub(1, 4) == "loot" then
+                        object:Destroy()
+                    end
+                end
+            end
+            task.wait(0.2)
+        end
+    end)
+
+    task.spawn(function()
+        while scriptRunning do
+            if autoDeleteChestsEnabled and scriptRunning then
+                for _, object in ipairs(Workspace:GetChildren()) do
+                    if string.lower(object.Name):sub(1, 5) == "chest" then
+                        object:Destroy()
+                    end
+                end
+            end
+            task.wait(0.2)
         end
     end)
 end)
